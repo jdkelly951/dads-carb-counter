@@ -5,26 +5,109 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Carb Counter</title>
   <style>
-    body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; background-color: #f4f4f9; color: #333; margin: 0; padding: 20px; }
-    .container { max-width: 600px; margin: 0 auto; background-color: #fff; padding: 20px; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
+    /* Basic styling and layout */
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      background-color: #f4f4f9;
+      color: #333;
+      margin: 0;
+      padding: 20px;
+    }
+    .container {
+      max-width: 600px;
+      margin: 0 auto;
+      background-color: #fff;
+      padding: 20px;
+      border-radius: 8px;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    }
+
+    /* Headings and sections */
     h1, h2 { text-align: center; color: #4a4a4a; }
     h1 small { font-size: 0.6em; color: #888; display: block; }
     h2 .undo-link { font-size: 0.6em; font-weight: normal; margin-left: 10px; }
+
+    /* Form and buttons */
     form { display: flex; flex-direction: column; gap: 15px; }
-    input[type="text"] { padding: 15px; font-size: 1.2em; border: 1px solid #ccc; border-radius: 5px; }
-    button[type="submit"] { padding: 15px; font-size: 1.2em; font-weight: bold; color: #fff; background-color: #007bff; border: none; border-radius: 5px; cursor: pointer; }
-    .total-carbs { font-size: 2em; font-weight: bold; text-align: center; color: #d9534f; margin: 20px 0; }
-    .average-carbs { font-size: 1.5em; font-weight: bold; text-align: center; color: #5cb85c; margin-bottom: 20px; }
+    input[type="text"] {
+      padding: 15px;
+      font-size: 1.2em;
+      border: 1px solid #ccc;
+      border-radius: 5px;
+    }
+    button[type="submit"], #mic-button {
+      padding: 15px;
+      font-size: 1.2em;
+      font-weight: bold;
+      color: #fff;
+      background-color: #007bff;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+    }
+
+    /* Display areas */
+    .total-carbs {
+      font-size: 2em;
+      font-weight: bold;
+      text-align: center;
+      color: #d9534f;
+      margin: 20px 0;
+    }
+    .average-carbs {
+      font-size: 1.5em;
+      font-weight: bold;
+      text-align: center;
+      color: #5cb85c;
+      margin-bottom: 20px;
+    }
+
+    /* Log list */
     ul { list-style-type: none; padding: 0; }
-    li { background-color: #f9f9f9; padding: 10px; border-bottom: 1px solid #eee; display: flex; justify-content: space-between; align-items: center; font-size: 1.1em; }
-    .delete-item { color: #dc3545; text-decoration: none; font-weight: bold; margin-left: 15px; }
-    .nav-link { display: block; text-align: center; margin-top: 20px; color: #007bff; text-decoration: none; font-size: 1.1em; }
+    li {
+      background-color: #f9f9f9;
+      padding: 10px;
+      border-bottom: 1px solid #eee;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 1.1em;
+    }
+    .delete-item {
+      color: #dc3545;
+      text-decoration: none;
+      font-weight: bold;
+      margin-left: 15px;
+    }
+
+    /* Links and tips */
+    .nav-link {
+      display: block;
+      text-align: center;
+      margin-top: 20px;
+      color: #007bff;
+      text-decoration: none;
+      font-size: 1.1em;
+    }
     .clear-link { color: #dc3545; }
-    .error-box { background-color: #f8d7da; color: #721c24; padding: 15px; border-radius: 5px; margin-bottom: 20px; text-align: center; }
+    .error-box {
+      background-color: #f8d7da;
+      color: #721c24;
+      padding: 15px;
+      border-radius: 5px;
+      margin-bottom: 20px;
+      text-align: center;
+    }
+
+    /* Voice input and tutorial */
     .search-container { display: flex; align-items: center; }
     #food-input { flex-grow: 1; }
-    #mic-button { padding: 15px; font-size: 1.2em; margin-left: 10px; background-color: #6c757d; color: white; border: none; border-radius: 5px; cursor: pointer; }
-    #ios-tip, #mic-unsupported { text-align: center; font-size: 0.9em; color: #6c757d; margin-top: 0; }
+    #ios-tip, #mic-unsupported {
+      text-align: center;
+      font-size: 0.9em;
+      color: #6c757d;
+      margin-top: 0;
+    }
 
     .tutorial-box {
       background-color: #e9f5ff;
@@ -50,6 +133,7 @@
   <div class="container">
     <h1>Dad's Carb Counter <small>Viewing: {{ display_date_str }}</small></h1>
 
+    <!-- Tutorial box shown only once using cookies -->
     {% if not request.cookies.get('seen_tutorial') %}
     <div id="tutorial-box" class="tutorial-box">
       <p><strong>How to use this:</strong></p>
@@ -62,10 +146,12 @@
     </div>
     {% endif %}
 
+    <!-- Display API error messages -->
     {% if error %}
     <div class="error-box">{{ error }}</div>
     {% endif %}
 
+    <!-- Food input form (only available on today's date) -->
     {% if viewing_today %}
     <form action="/" method="post">
       <div class="search-container">
@@ -83,12 +169,14 @@
     <p id="mic-unsupported" style="display: none;">Voice input not supported in this browser. Try Safari on iPhone.</p>
     {% endif %}
 
+    <!-- Daily totals -->
     <h2>Total Carbs</h2>
     <div class="total-carbs">{{ total_carbs|round(1) }} g</div>
 
     <h2>7-Day Average</h2>
     <div class="average-carbs">{{ average_7_days }} g</div>
 
+    <!-- Logbook listing -->
     <h2>Logbook
       {% if viewing_today and food_log %}
       <a href="/undo" class="undo-link">(undo last)</a>
@@ -110,17 +198,20 @@
       {% endfor %}
     </ul>
 
+    <!-- Navigation links -->
     <a href="/history" class="nav-link">View History</a>
     {% if food_log %}
     <a href="/clear/{{ display_date_raw }}" class="nav-link clear-link">Clear This Day's Log</a>
     {% endif %}
 
+    <!-- Ko-fi donation link -->
     <p style="text-align: center; margin-top: 20px;">
       <a href="https://ko-fi.com/johnkelly33759" target="_blank" style="color: #007bff; text-decoration: none;">
         ☕ Support this app on Ko-fi
       </a>
     </p>
 
+    <!-- Speech recognition and tutorial dismissal logic -->
     <script>
       function dismissTutorial() {
         document.getElementById("tutorial-box").style.display = "none";

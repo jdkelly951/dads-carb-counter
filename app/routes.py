@@ -14,6 +14,7 @@ EASTERN = pytz.timezone('America/New_York')
 
 
 def get_user_id():
+    """Retrieve or assign a unique user ID using browser cookies."""
     user_id = request.cookies.get('user_id')
     if not user_id:
         user_id = str(uuid.uuid4())
@@ -23,7 +24,11 @@ def get_user_id():
 @main_routes.route('/', methods=['GET', 'POST'])
 @main_routes.route('/day/<date_str>', methods=['GET'])
 def index(date_str=None):
-    # ✅ Load env vars inside the route
+    """
+    Main entry point for logging and viewing carb data.
+    - Handles food entry via POST requests.
+    - Displays log for the selected or current date.
+    """
     APP_ID = os.environ.get("NUTRITIONIX_APP_ID")
     API_KEY = os.environ.get("NUTRITIONIX_API_KEY")
     HEADERS = {'x-app-id': APP_ID, 'x-app-key': API_KEY}
@@ -31,6 +36,7 @@ def index(date_str=None):
     error_message = None
     all_data = load_data(user_id)
 
+    # Determine which date to display
     if date_str is None:
         display_date = get_now().strftime('%Y-%m-%d')
         viewing_today = True
@@ -39,6 +45,7 @@ def index(date_str=None):
         viewing_today = (display_date == get_now().strftime('%Y-%m-%d'))
 
     if request.method == 'POST':
+        # Redirect POSTs to another day to the main page (only today is editable)
         if not viewing_today:
             return redirect(url_for('main_routes.index'))
 
@@ -47,6 +54,7 @@ def index(date_str=None):
             try:
                 if not all([APP_ID, API_KEY]):
                     raise ValueError("API keys are not configured.")
+
                 response = requests.post(NUTRITIONIX_ENDPOINT, headers=HEADERS, json={'query': query})
                 response.raise_for_status()
                 result = response.json()
@@ -56,13 +64,15 @@ def index(date_str=None):
                 else:
                     today_str = get_now().strftime('%Y-%m-%d')
                     log_for_today = all_data.get(today_str, [])
+
+                    # Extract carb data for each food item returned
                     for item in result.get('foods', []):
                         log_for_today.append({
                             'food': item.get('food_name'),
                             'carbs': item.get('nf_total_carbohydrate', 0),
                             'serving_qty': item.get('serving_qty'),
                             'serving_unit': item.get('serving_unit')
-    })
+                        })
 
                     all_data[today_str] = log_for_today
                     save_data(user_id, all_data)
@@ -72,41 +82,48 @@ def index(date_str=None):
             except ValueError as e:
                 error_message = str(e)
 
+    # Get food log and carb totals for the displayed date
     food_log_for_display_date = all_data.get(display_date, [])
     total_carbs = sum(item['carbs'] for item in food_log_for_display_date)
 
-    # Calculate average carbs over past 7 days
+    # Calculate 7-day average carbs
     past_7_dates = [
         (get_now() - timedelta(days=i)).strftime('%Y-%m-%d')
         for i in range(7)
     ]
-
     carbs_last_7_days = [
         sum(item['carbs'] for item in all_data.get(date, []))
         for date in past_7_dates
     ]
-
     average_7_days = round(sum(carbs_last_7_days) / 7, 1)
 
+    # Format display date nicely
     display_date_obj = datetime.strptime(display_date, '%Y-%m-%d')
     display_date_formatted = display_date_obj.strftime('%A, %B %d, %Y')
+
     suggestions = get_suggestions(all_data)
 
-    response = make_response(render_template('index.html',
-                            food_log=food_log_for_display_date,
-                            total_carbs=total_carbs,
-                            average_7_days=average_7_days,
-                            display_date_str=display_date_formatted,
-                            display_date_raw=display_date,
-                            viewing_today=viewing_today,
-                            error=error_message,
-                            suggestions=suggestions))
+    # Render the main page and set persistent cookie
+    response = make_response(render_template(
+        'index.html',
+        food_log=food_log_for_display_date,
+        total_carbs=total_carbs,
+        average_7_days=average_7_days,
+        display_date_str=display_date_formatted,
+        display_date_raw=display_date,
+        viewing_today=viewing_today,
+        error=error_message,
+        suggestions=suggestions
+    ))
     response.set_cookie('user_id', user_id, max_age=60 * 60 * 24 * 365)
     return response
 
 
 @main_routes.route('/history')
 def history():
+    """
+    View a list of all tracked dates for the current user.
+    """
     user_id = get_user_id()
     all_data = load_data(user_id)
     sorted_dates = sorted(all_data.keys(), reverse=True)
@@ -117,6 +134,9 @@ def history():
 
 @main_routes.route('/undo')
 def undo():
+    """
+    Remove the most recent entry from today's food log.
+    """
     user_id = get_user_id()
     all_data = load_data(user_id)
     today_str = get_now().strftime('%Y-%m-%d')
@@ -128,6 +148,9 @@ def undo():
 
 @main_routes.route('/clear/<date_str>')
 def clear_day(date_str):
+    """
+    Completely delete all food logs for a specific date.
+    """
     user_id = get_user_id()
     all_data = load_data(user_id)
     if date_str in all_data:
@@ -138,6 +161,9 @@ def clear_day(date_str):
 
 @main_routes.route('/delete/<date_str>/<int:item_index>')
 def delete_item(date_str, item_index):
+    """
+    Delete a single item from the food log of a given date.
+    """
     user_id = get_user_id()
     all_data = load_data(user_id)
     if date_str in all_data and 0 <= item_index < len(all_data[date_str]):
