@@ -67,7 +67,14 @@
     <ul>
       {% for item in food_log %}
       <li>
-        <span>{{ item.food.title() }} - <strong>{{ item.carbs|round(1) }} g</strong></span>
+        <span>
+  {{ item.food.title() }}
+  {% if item.serving_qty and item.serving_unit %}
+    — {{ item.serving_qty }} serving{{ 's' if item.serving_qty > 1 }} ({{ item.serving_unit }})
+  {% endif %}
+  — <strong>{{ item.carbs|round(1) }} g</strong>
+</span>
+
         <a href="/delete/{{ display_date_raw }}/{{ loop.index0 }}" class="delete-item">(x)</a>
       </li>
       {% endfor %}
