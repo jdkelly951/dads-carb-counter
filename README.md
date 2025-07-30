@@ -1,4 +1,4 @@
-# Dad’s Carb Tracker
+# Dad’s Carb Counter
 
 Dad’s Carb Tracker is a simple web app for logging and tracking daily carbohydrate intake.  
 Originally built for my father, who has diabetes, the app makes it easy to log meals, see daily totals, and view a 7-day average of carbs consumed.
@@ -30,5 +30,5 @@ Visit the app here: [https://kjohn314.pythonanywhere.com](https://kjohn314.pytho
 ### 1. Clone the repository
 
 ```bash
-git clone https://github.com/jdkelly951/dads-carb-tracker.git
-cd dads-carb-tracker
+git clone https://github.com/jdkelly951/dads-carb-counter.git
+cd dads-carb-counter
