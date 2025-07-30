@@ -9,11 +9,7 @@ from .utils import load_data, save_data, get_suggestions, get_now
 
 main_routes = Blueprint("main_routes", __name__)
 
-APP_ID = os.environ.get("NUTRITIONIX_APP_ID")
-API_KEY = os.environ.get("NUTRITIONIX_API_KEY")
 NUTRITIONIX_ENDPOINT = "https://trackapi.nutritionix.com/v2/natural/nutrients"
-HEADERS = {'x-app-id': APP_ID, 'x-app-key': API_KEY}
-
 EASTERN = pytz.timezone('America/New_York')
 
 
@@ -27,6 +23,10 @@ def get_user_id():
 @main_routes.route('/', methods=['GET', 'POST'])
 @main_routes.route('/day/<date_str>', methods=['GET'])
 def index(date_str=None):
+    # ✅ Load env vars inside the route
+    APP_ID = os.environ.get("NUTRITIONIX_APP_ID")
+    API_KEY = os.environ.get("NUTRITIONIX_API_KEY")
+    HEADERS = {'x-app-id': APP_ID, 'x-app-key': API_KEY}
     user_id = get_user_id()
     error_message = None
     all_data = load_data(user_id)
@@ -59,8 +59,11 @@ def index(date_str=None):
                     for item in result.get('foods', []):
                         log_for_today.append({
                             'food': item.get('food_name'),
-                            'carbs': item.get('nf_total_carbohydrate', 0)
-                        })
+                            'carbs': item.get('nf_total_carbohydrate', 0),
+                            'serving_qty': item.get('serving_qty'),
+                            'serving_unit': item.get('serving_unit')
+    })
+
                     all_data[today_str] = log_for_today
                     save_data(user_id, all_data)
 
