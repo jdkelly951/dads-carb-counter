@@ -9,8 +9,8 @@ from .utils import load_data, save_data, get_suggestions, get_now
 
 main_routes = Blueprint("main_routes", __name__)
 
-APP_ID = os.environ.get("APP_ID")
-API_KEY = os.environ.get("API_KEY")
+APP_ID = os.environ.get("NUTRITIONIX_APP_ID")
+API_KEY = os.environ.get("NUTRITIONIX_API_KEY")
 NUTRITIONIX_ENDPOINT = "https://trackapi.nutritionix.com/v2/natural/nutrients"
 HEADERS = {'x-app-id': APP_ID, 'x-app-key': API_KEY}
 
