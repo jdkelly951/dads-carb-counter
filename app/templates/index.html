@@ -25,11 +25,42 @@
     #food-input { flex-grow: 1; }
     #mic-button { padding: 15px; font-size: 1.2em; margin-left: 10px; background-color: #6c757d; color: white; border: none; border-radius: 5px; cursor: pointer; }
     #ios-tip, #mic-unsupported { text-align: center; font-size: 0.9em; color: #6c757d; margin-top: 0; }
+
+    .tutorial-box {
+      background-color: #e9f5ff;
+      border-left: 5px solid #007bff;
+      padding: 15px;
+      margin: 15px 0 20px 0;
+      border-radius: 5px;
+      font-size: 1em;
+    }
+    .tutorial-box button {
+      margin-top: 10px;
+      padding: 6px 12px;
+      font-size: 0.9em;
+      background-color: #007bff;
+      color: white;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+    }
   </style>
 </head>
 <body>
   <div class="container">
     <h1>Dad's Carb Counter <small>Viewing: {{ display_date_str }}</small></h1>
+
+    {% if not request.cookies.get('seen_tutorial') %}
+    <div id="tutorial-box" class="tutorial-box">
+      <p><strong>How to use this:</strong></p>
+      <ul>
+        <li>Type what you ate. Example: <em>1 apple and 2 slices of toast</em></li>
+        <li>Or click the 🎤 button to speak</li>
+        <li>Click “Add Food” — we’ll show the carb breakdown</li>
+      </ul>
+      <button onclick="dismissTutorial()">Got it!</button>
+    </div>
+    {% endif %}
 
     {% if error %}
     <div class="error-box">{{ error }}</div>
@@ -68,13 +99,12 @@
       {% for item in food_log %}
       <li>
         <span>
-  {{ item.food.title() }}
-  {% if item.serving_qty and item.serving_unit %}
-    — {{ item.serving_qty }} serving{{ 's' if item.serving_qty > 1 }} ({{ item.serving_unit }})
-  {% endif %}
-  — <strong>{{ item.carbs|round(1) }} g</strong>
-</span>
-
+          {{ item.food.title() }}
+          {% if item.serving_qty and item.serving_unit %}
+            — {{ item.serving_qty }} serving{{ 's' if item.serving_qty > 1 }} ({{ item.serving_unit }})
+          {% endif %}
+          — <strong>{{ item.carbs|round(1) }} g</strong>
+        </span>
         <a href="/delete/{{ display_date_raw }}/{{ loop.index0 }}" class="delete-item">(x)</a>
       </li>
       {% endfor %}
@@ -85,53 +115,59 @@
     <a href="/clear/{{ display_date_raw }}" class="nav-link clear-link">Clear This Day's Log</a>
     {% endif %}
 
-<p style="text-align: center; margin-top: 20px;">
-  <a href="https://ko-fi.com/johnkelly33759" target="_blank" style="color: #007bff; text-decoration: none;">
-    ☕ Support this app on Ko-fi
-  </a>
-</p>
+    <p style="text-align: center; margin-top: 20px;">
+      <a href="https://ko-fi.com/johnkelly33759" target="_blank" style="color: #007bff; text-decoration: none;">
+        ☕ Support this app on Ko-fi
+      </a>
+    </p>
 
-  <script>
-    window.SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-
-    const micButton = document.getElementById('mic-button');
-    const foodInput = document.getElementById('food-input');
-    const iosTip = document.getElementById('ios-tip');
-    const micUnsupported = document.getElementById('mic-unsupported');
-
-    const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
-
-    if (window.SpeechRecognition) {
-      const recognition = new SpeechRecognition();
-
-      recognition.onresult = function(event) {
-        const transcript = event.results[0][0].transcript;
-        foodInput.value = transcript;
-      };
-
-      micButton.addEventListener('click', function () {
-        try {
-          recognition.start();
-          foodInput.placeholder = 'Listening...';
-        } catch (e) {
-          alert('Speech recognition is not available or is already active.');
-        }
-      });
-
-      recognition.onspeechend = function () {
-        recognition.stop();
-        foodInput.placeholder = 'e.g., 1 apple and toast';
-      };
-
-    } else {
-      micButton.style.display = 'none';
-
-      if (isIOS) {
-        iosTip.style.display = 'block';
-      } else {
-        micUnsupported.style.display = 'block';
+    <script>
+      function dismissTutorial() {
+        document.getElementById("tutorial-box").style.display = "none";
+        document.cookie = "seen_tutorial=true; path=/; max-age=" + (60 * 60 * 24 * 365);
       }
-    }
-  </script>
+
+      window.SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+
+      const micButton = document.getElementById('mic-button');
+      const foodInput = document.getElementById('food-input');
+      const iosTip = document.getElementById('ios-tip');
+      const micUnsupported = document.getElementById('mic-unsupported');
+
+      const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
+
+      if (window.SpeechRecognition) {
+        const recognition = new SpeechRecognition();
+
+        recognition.onresult = function(event) {
+          const transcript = event.results[0][0].transcript;
+          foodInput.value = transcript;
+        };
+
+        micButton.addEventListener('click', function () {
+          try {
+            recognition.start();
+            foodInput.placeholder = 'Listening...';
+          } catch (e) {
+            alert('Speech recognition is not available or is already active.');
+          }
+        });
+
+        recognition.onspeechend = function () {
+          recognition.stop();
+          foodInput.placeholder = 'e.g., 1 apple and toast';
+        };
+
+      } else {
+        micButton.style.display = 'none';
+
+        if (isIOS) {
+          iosTip.style.display = 'block';
+        } else {
+          micUnsupported.style.display = 'block';
+        }
+      }
+    </script>
+  </div>
 </body>
 </html>
