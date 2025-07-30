@@ -2,7 +2,7 @@ import os
 import json
 import uuid
 import requests
-from datetime import datetime
+from datetime import datetime, timedelta
 from flask import Blueprint, request, redirect, url_for, render_template, make_response
 import pytz
 from .utils import load_data, save_data, get_suggestions, get_now
@@ -57,7 +57,10 @@ def index(date_str=None):
                     today_str = get_now().strftime('%Y-%m-%d')
                     log_for_today = all_data.get(today_str, [])
                     for item in result.get('foods', []):
-                        log_for_today.append({'food': item.get('food_name'), 'carbs': item.get('nf_total_carbohydrate', 0)})
+                        log_for_today.append({
+                            'food': item.get('food_name'),
+                            'carbs': item.get('nf_total_carbohydrate', 0)
+                        })
                     all_data[today_str] = log_for_today
                     save_data(user_id, all_data)
 
@@ -68,6 +71,20 @@ def index(date_str=None):
 
     food_log_for_display_date = all_data.get(display_date, [])
     total_carbs = sum(item['carbs'] for item in food_log_for_display_date)
+
+    # Calculate average carbs over past 7 days
+    past_7_dates = [
+        (get_now() - timedelta(days=i)).strftime('%Y-%m-%d')
+        for i in range(7)
+    ]
+
+    carbs_last_7_days = [
+        sum(item['carbs'] for item in all_data.get(date, []))
+        for date in past_7_dates
+    ]
+
+    average_7_days = round(sum(carbs_last_7_days) / 7, 1)
+
     display_date_obj = datetime.strptime(display_date, '%Y-%m-%d')
     display_date_formatted = display_date_obj.strftime('%A, %B %d, %Y')
     suggestions = get_suggestions(all_data)
@@ -75,6 +92,7 @@ def index(date_str=None):
     response = make_response(render_template('index.html',
                             food_log=food_log_for_display_date,
                             total_carbs=total_carbs,
+                            average_7_days=average_7_days,
                             display_date_str=display_date_formatted,
                             display_date_raw=display_date,
                             viewing_today=viewing_today,

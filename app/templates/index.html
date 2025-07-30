@@ -14,18 +14,17 @@
     input[type="text"] { padding: 15px; font-size: 1.2em; border: 1px solid #ccc; border-radius: 5px; }
     button[type="submit"] { padding: 15px; font-size: 1.2em; font-weight: bold; color: #fff; background-color: #007bff; border: none; border-radius: 5px; cursor: pointer; }
     .total-carbs { font-size: 2em; font-weight: bold; text-align: center; color: #d9534f; margin: 20px 0; }
+    .average-carbs { font-size: 1.5em; font-weight: bold; text-align: center; color: #5cb85c; margin-bottom: 20px; }
     ul { list-style-type: none; padding: 0; }
     li { background-color: #f9f9f9; padding: 10px; border-bottom: 1px solid #eee; display: flex; justify-content: space-between; align-items: center; font-size: 1.1em; }
     .delete-item { color: #dc3545; text-decoration: none; font-weight: bold; margin-left: 15px; }
     .nav-link { display: block; text-align: center; margin-top: 20px; color: #007bff; text-decoration: none; font-size: 1.1em; }
     .clear-link { color: #dc3545; }
     .error-box { background-color: #f8d7da; color: #721c24; padding: 15px; border-radius: 5px; margin-bottom: 20px; text-align: center; }
-
-    /* --- NEW STYLES --- */
     .search-container { display: flex; align-items: center; }
     #food-input { flex-grow: 1; }
     #mic-button { padding: 15px; font-size: 1.2em; margin-left: 10px; background-color: #6c757d; color: white; border: none; border-radius: 5px; cursor: pointer; }
-    #ios-tip { text-align: center; font-size: 0.9em; color: #6c757d; margin-top: 0; }
+    #ios-tip, #mic-unsupported { text-align: center; font-size: 0.9em; color: #6c757d; margin-top: 0; }
   </style>
 </head>
 <body>
@@ -49,13 +48,15 @@
       </datalist>
       <button type="submit">Add Food</button>
     </form>
-    
     <p id="ios-tip" style="display: none;">Tip: Tap the microphone on your keyboard to use voice input!</p>
-
+    <p id="mic-unsupported" style="display: none;">Voice input not supported in this browser. Try Safari on iPhone.</p>
     {% endif %}
 
     <h2>Total Carbs</h2>
     <div class="total-carbs">{{ total_carbs|round(1) }} g</div>
+
+    <h2>7-Day Average</h2>
+    <div class="average-carbs">{{ average_7_days }} g</div>
 
     <h2>Logbook
       {% if viewing_today and food_log %}
@@ -76,48 +77,54 @@
     {% if food_log %}
     <a href="/clear/{{ display_date_raw }}" class="nav-link clear-link">Clear This Day's Log</a>
     {% endif %}
-  </div>
+
+<p style="text-align: center; margin-top: 20px;">
+  <a href="https://ko-fi.com/johnkelly33759" target="_blank" style="color: #007bff; text-decoration: none;">
+    ☕ Support this app on Ko-fi
+  </a>
+</p>
 
   <script>
-    // Check if the browser supports the Web Speech API
     window.SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
 
+    const micButton = document.getElementById('mic-button');
+    const foodInput = document.getElementById('food-input');
+    const iosTip = document.getElementById('ios-tip');
+    const micUnsupported = document.getElementById('mic-unsupported');
+
+    const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
+
     if (window.SpeechRecognition) {
-        const recognition = new SpeechRecognition();
-        const micButton = document.getElementById('mic-button');
-        const foodInput = document.getElementById('food-input');
+      const recognition = new SpeechRecognition();
 
-        recognition.onresult = function(event) {
-            const transcript = event.results[0][0].transcript;
-            foodInput.value = transcript;
-        };
+      recognition.onresult = function(event) {
+        const transcript = event.results[0][0].transcript;
+        foodInput.value = transcript;
+      };
 
-        micButton.addEventListener('click', function() {
-            try {
-                recognition.start();
-                foodInput.placeholder = 'Listening...';
-            } catch(e) {
-                alert('Speech recognition is not available or is already active.');
-            }
-        });
+      micButton.addEventListener('click', function () {
+        try {
+          recognition.start();
+          foodInput.placeholder = 'Listening...';
+        } catch (e) {
+          alert('Speech recognition is not available or is already active.');
+        }
+      });
 
-        recognition.onspeechend = function() {
-            recognition.stop();
-            foodInput.placeholder = 'e.g., 1 apple and toast';
-        };
+      recognition.onspeechend = function () {
+        recognition.stop();
+        foodInput.placeholder = 'e.g., 1 apple and toast';
+      };
+
     } else {
-        // Hide the button if the API is not supported
-        document.getElementById('mic-button').style.display = 'none';
+      micButton.style.display = 'none';
+
+      if (isIOS) {
+        iosTip.style.display = 'block';
+      } else {
+        micUnsupported.style.display = 'block';
+      }
     }
   </script>
-
-  <script>
-    // Check if the user is on an iOS device
-    if (/iPad|iPhone|iPod/.test(navigator.userAgent)) {
-        // If they are, show the helpful tip
-        document.getElementById('ios-tip').style.display = 'block';
-    }
-  </script>
-
 </body>
 </html>
