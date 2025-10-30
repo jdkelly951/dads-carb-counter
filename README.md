@@ -1,34 +1,28 @@
 # Dad’s Carb Counter
 
-Dad’s Carb Tracker is a simple web app for logging and tracking daily carbohydrate intake.  
-Originally built for my father, who has diabetes, the app makes it easy to log meals, see daily totals, and view a 7-day average of carbs consumed.
-
-The app uses the Nutritionix API to analyze natural language food input like "2 eggs and toast" and automatically estimates carb values.
-
----
+Small **Python/Flask** app to log meals and track daily carbohydrate intake with a rolling **7-day average**. Built for my dad (diabetes).
 
 ## Live Demo
-
-Visit the app here: [https://kjohn314.pythonanywhere.com](https://kjohn314.pythonanywhere.com)
-
----
+https://kjohn314.pythonanywhere.com
 
 ## Features
+- Natural-language meal logging via **Nutritionix API**
+- Daily total + 7-day average
+- Cookie-based tracking (no login), history with undo/delete/clear
+- Optional voice input (browser dependent)
 
-- Natural language food logging
-- 7-day average and daily total display
-- Cookie-based user tracking (no login required)
-- Voice input support for supported browsers
-- Log history view
-- Undo, delete, and clear log entries
-- No account or setup required
+## Run Locally (simple)
+1) Install dependencies: `pip install -r requirements.txt`  
+2) Set two env vars (from your Nutritionix account):  
+   - `NUTRITIONIX_APP_ID=your_app_id`  
+   - `NUTRITIONIX_API_KEY=your_api_key`  
+3) Start the app: `python run.py`  
+4) Open the URL Flask prints (usually http://127.0.0.1:5000)
 
----
+## Tech
+Python • Flask • Requests • HTML/CSS
 
-## Getting Started (Run Locally)
-
-### 1. Clone the repository
-
-```bash
-git clone https://github.com/jdkelly951/dads-carb-counter.git
-cd dads-carb-counter
+## Structure
+- `app/` (routes, templates, static)
+- `run.py` (entry point)
+- `requirements.txt`
